@@ -10,8 +10,6 @@ import {
   MdFolderOpen,
   MdOutlineInsertDriveFile,
 } from "react-icons/md";
-import "react-complex-tree/lib/style-modern.css";
-
 function App() {
   const items = {
     root: {
@@ -152,7 +150,6 @@ function App() {
           }
           canDragAndDrop={true}
           canDropOnFolder={true}
-          canDropOnNonFolder={true}
           canReorderItems={true}
           getItemTitle={(item) => item.data}
           viewState={{}}
@@ -181,6 +178,9 @@ function App() {
                     alignItems: "center",
                     gap: 4,
                     padding: "4px 0px",
+                    background: props.context.isFocused
+                      ? "rgba(213, 81, 81, 0.2)"
+                      : "inherit",
                   }}
                 >
                   {props.item.isFolder ? props.arrow : <span />}
@@ -235,7 +235,7 @@ function App() {
                     style={{
                       fontSize: 14,
                       fontWeight: 400,
-                      fontFamily: '"Roboto", sans-serif;',
+                      fontFamily: "Roboto, sans-serif",
                     }}
                   >
                     {title}
@@ -267,19 +267,20 @@ function App() {
               <div
                 {...lineProps}
                 style={{
-                  position: "absolute",
-                  right: "0",
+                  position: "relative",
+                  // right: "0",
+                  // zIndex: 100,
                   top:
                     draggingPosition.targetType === "between-items" &&
                     draggingPosition.linePosition === "top"
-                      ? "0px"
+                      ? "-6px"
                       : draggingPosition.targetType === "between-items" &&
                         draggingPosition.linePosition === "bottom"
-                      ? "-4px"
-                      : "-2px",
-                  left: `${draggingPosition.depth * 23}px`,
-                  height: "4px",
-                  borderBottom: "4px dotted red",
+                      ? "-8px"
+                      : "-8px",
+                  left: `${draggingPosition.depth * 40}px`,
+                  height: "6px",
+                  borderBottom: "6px solid red",
                 }}
               />
             ),
