@@ -140,7 +140,13 @@ function App() {
           </pre>
         </h3>
       </div>
-      <div style={{ background: "#f3f3f3" }}>
+      <div
+        style={{
+          background: "#f3f3f3",
+          maxWidth: 800,
+          margin: "0px auto",
+        }}
+      >
         <UncontrolledTreeEnvironment
           dataProvider={
             new StaticTreeDataProvider(items, (item, data) => ({
