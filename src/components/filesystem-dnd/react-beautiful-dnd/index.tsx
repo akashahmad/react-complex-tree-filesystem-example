@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState } from "react";
 import {
   DragDropContext,
@@ -61,7 +62,7 @@ const grid = 8;
 const getItemStyle = (
   isDragging: boolean,
   draggableStyle?: DraggingStyle | NotDraggingStyle
-) => ({
+): any => ({
   userSelect: "none",
   padding: grid * 2,
   margin: `0 0 ${grid}px 0`,
@@ -171,7 +172,7 @@ const App: React.FC = () => {
                             ref={nestedProvided.innerRef}
                             style={getListStyle(nestedSnapshot.isDraggingOver)}
                           >
-                            {item.fs.map((nested, nestedIndex) => (
+                            {item?.fs?.map((nested, nestedIndex) => (
                               <Draggable
                                 key={nested.id}
                                 draggableId={nested.id}

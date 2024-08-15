@@ -5,8 +5,8 @@ function App() {
 
   return (
     <div className="App">
-      <button onClick={() => navigate("/rb-dnd")}>React Complex Tree</button>
-      <button onClick={() => navigate("/rt-dnd")}>React Beautiful DnD</button>
+      <button onClick={() => navigate("/rt-dnd")}>React Complex Tree</button>
+      <button onClick={() => navigate("/rb-dnd")}>React Beautiful DnD</button>
     </div>
   );
 }
