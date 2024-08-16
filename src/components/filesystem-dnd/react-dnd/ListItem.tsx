@@ -90,6 +90,46 @@ export const ListItem: React.FC<{
     }
   }, [itemHeight]);
 
+  const renderPlaceholder = (depth: number) => (
+    <span
+      style={{
+        display: "block",
+        height: itemHeight ? `${itemHeight}px` : "auto",
+        backgroundColor: "rgba(133, 175, 230, .2)",
+        border: "2px dotted #297fb5",
+        marginLeft: `${depth * 10}px`, // indent based on depth
+        width: `calc(100% - ${depth * 10}px)`, // reduce width based on depth
+      }}
+    >
+      &nbsp;
+    </span>
+  );
+
+  const renderItemContent = () => (
+    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+      {item.type === "module" ? (
+        <span style={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <MdChevronRight
+            color="gray"
+            size={18}
+            style={{
+              transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          />
+          <MdFolder color="gray" size={18} />
+        </span>
+      ) : (
+        <span style={{ marginLeft: 16 }}>
+          <MdInsertDriveFile color="gray" size={18} />
+        </span>
+      )}
+      <span style={{ fontSize: 14, fontFamily: "Roboto, san-serif" }}>
+        {item.name}
+      </span>
+    </div>
+  );
+
   return (
     <div ref={dragPreview}>
       <div
@@ -107,51 +147,24 @@ export const ListItem: React.FC<{
         }}
         onClick={() => item.type === "module" && setIsOpen(!isOpen)}
       >
-        {collected?.isDragging ? (
-          <span
-            style={{
-              display: "block",
-              height: itemHeight ? `${itemHeight}px` : "auto",
-            }}
-          >
-            &nbsp;
-          </span>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {item.type === "module" ? (
-              <span style={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <MdChevronRight
-                  color="gray"
-                  size={18}
-                  style={{
-                    transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
-                    transition: "transform 0.2s ease",
-                  }}
-                />
-                <MdFolder color="gray" size={18} />
-              </span>
-            ) : (
-              <span style={{ marginLeft: 16 }}>
-                <MdInsertDriveFile color="gray" size={18} />
-              </span>
-            )}
-            <span style={{ fontSize: 14, fontFamily: "Roboto, san-serif" }}>
-              {item.name}
-            </span>
-          </div>
-        )}
+        {collected?.isDragging ? <span>&nbsp;</span> : renderItemContent()}
       </div>
 
       {isOpen &&
         item.fileSystem &&
         item.fileSystem.map((childItem, index) => (
-          <ListItem
-            key={childItem.id}
-            item={childItem}
-            path={[...path, index]}
-            moveItem={moveItem}
-            setDragging={setDragging}
-          />
+          <React.Fragment key={childItem.id}>
+            {collected?.isDragging ? (
+              renderPlaceholder(path.length + 1) // Indent children more
+            ) : (
+              <ListItem
+                item={childItem}
+                path={[...path, index]}
+                moveItem={moveItem}
+                setDragging={setDragging}
+              />
+            )}
+          </React.Fragment>
         ))}
     </div>
   );
