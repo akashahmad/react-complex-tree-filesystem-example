@@ -40,7 +40,12 @@ export const ListItem: React.FC<{
 
       // Prevent replacing the item with itself
       if (JSON.stringify(dragPath) === JSON.stringify(hoverPath)) {
-        setBeingDragged(true);
+        if (!beingDragged) {
+          setBeingDragged(true);
+          setTimeout(() => {
+            setBeingDragged(false);
+          }, 1000);
+        }
         return;
       } else {
         setBeingDragged(false);
@@ -57,6 +62,7 @@ export const ListItem: React.FC<{
         dragPath[dragPath.length - 1] < hoverPath[hoverPath.length - 1] &&
         hoverClientY < hoverMiddleY
       ) {
+        setBeingDragged(false);
         return;
       }
 
@@ -64,6 +70,7 @@ export const ListItem: React.FC<{
         dragPath[dragPath.length - 1] > hoverPath[hoverPath.length - 1] &&
         hoverClientY > hoverMiddleY
       ) {
+        setBeingDragged(false);
         return;
       }
 
@@ -78,6 +85,9 @@ export const ListItem: React.FC<{
       // Perform the move
       moveItem(dragPath, hoverPath);
       draggedItem.path = hoverPath;
+    },
+    drop: () => {
+      setBeingDragged(false);
     },
   });
 
