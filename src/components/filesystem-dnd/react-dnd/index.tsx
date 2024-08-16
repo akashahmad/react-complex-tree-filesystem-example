@@ -10,11 +10,66 @@ const FileSystem: React.FC = () => {
 
   const [isDragging, setIsDragging] = useState(false);
 
-  const moveItem = (fromIndex: number, toIndex: number) => {
-    const updatedItems = [...fileSystem];
-    const [movedItem] = updatedItems.splice(fromIndex, 1);
-    updatedItems.splice(toIndex, 0, movedItem);
-    setFileSystem(updatedItems);
+  const moveItem = (fromPath: number[], toPath: number[]) => {
+    setFileSystem((prevFileSystem) => {
+      const updatedFileSystem = JSON.parse(JSON.stringify(prevFileSystem));
+
+      // Find the item being moved
+      const itemToMove = fromPath.reduce(
+        (currentItem, pathIndex) => currentItem?.fileSystem?.[pathIndex],
+        { fileSystem: updatedFileSystem }
+      );
+
+      if (!itemToMove) {
+        console.error("Item to move is undefined.");
+        return prevFileSystem;
+      }
+
+      // Remove the item from the original location
+      const parentFrom = fromPath
+        .slice(0, -1)
+        .reduce(
+          (currentItem, pathIndex) => currentItem?.fileSystem?.[pathIndex],
+          { fileSystem: updatedFileSystem }
+        );
+
+      if (!parentFrom?.fileSystem) {
+        console.error("Parent for removing item is undefined.");
+        return prevFileSystem;
+      }
+
+      parentFrom.fileSystem.splice(fromPath[fromPath.length - 1], 1);
+
+      // Add the item to the new location
+      const parentTo = toPath
+        .slice(0, -1)
+        .reduce(
+          (currentItem, pathIndex) => currentItem?.fileSystem?.[pathIndex],
+          { fileSystem: updatedFileSystem }
+        );
+
+      if (!parentTo?.fileSystem) {
+        console.error("Parent for adding item is undefined.");
+        return prevFileSystem;
+      }
+
+      parentTo.fileSystem.splice(toPath[toPath.length - 1], 0, itemToMove);
+
+      return updatedFileSystem;
+    });
+  };
+
+  const handleMoveItem = (fromPath: number[], toPath: number[]) => {
+    if (fromPath.length > toPath.length) {
+      // Moving from nested level to higher level
+      moveItem(fromPath, toPath);
+    } else if (fromPath.length < toPath.length) {
+      // Moving from higher level to nested level
+      moveItem(fromPath, toPath);
+    } else {
+      // Moving within the same level
+      moveItem(fromPath, toPath);
+    }
   };
 
   return (
@@ -31,9 +86,9 @@ const FileSystem: React.FC = () => {
         {fileSystem.map((item, index) => (
           <ListItem
             key={item.id}
-            index={index}
+            path={[index]}
             item={item}
-            moveItem={moveItem}
+            moveItem={handleMoveItem} // Use handleMoveItem here
             setDragging={setIsDragging}
           />
         ))}

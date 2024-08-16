@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDrag, useDrop, type XYCoord } from "react-dnd";
 import { MdInsertDriveFile, MdFolder, MdChevronRight } from "react-icons/md";
 import { type DragItem, type Item } from "./interface";
@@ -7,15 +7,17 @@ const ACCEPTED_TYPE = "ALL";
 
 export const ListItem: React.FC<{
   item: Item;
-  index: number;
-  moveItem: (fromIndex: number, toIndex: number) => void;
+  path: number[];
+  moveItem: (fromPath: number[], toPath: number[]) => void;
   setDragging: (isDragging: boolean) => void;
-}> = ({ item, index, moveItem, setDragging }) => {
-  const ref = React.useRef<HTMLDivElement>(null);
+}> = ({ item, path, moveItem, setDragging }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false); // state for folder open/close
+  const [itemHeight, setItemHeight] = useState<number | null>(null); // state for storing the height of the item
 
   const [collected, drag, dragPreview] = useDrag({
     type: typeof ACCEPTED_TYPE,
-    item: { ...item, index, type: ACCEPTED_TYPE },
+    item: { ...item, path, type: ACCEPTED_TYPE },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -28,10 +30,12 @@ export const ListItem: React.FC<{
       if (!ref.current) {
         return;
       }
-      const dragIndex = draggedItem.index;
-      const hoverIndex = index;
 
-      if (dragIndex === hoverIndex) {
+      const dragPath = draggedItem.path;
+      const hoverPath = path;
+
+      // Prevent replacing the item with itself
+      if (JSON.stringify(dragPath) === JSON.stringify(hoverPath)) {
         return;
       }
 
@@ -41,26 +45,50 @@ export const ListItem: React.FC<{
       const clientOffset = monitor.getClientOffset();
       const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
 
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
+      // Only move when the mouse has crossed half of the item's height
+      if (
+        dragPath[dragPath.length - 1] < hoverPath[hoverPath.length - 1] &&
+        hoverClientY < hoverMiddleY
+      ) {
         return;
       }
 
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
+      if (
+        dragPath[dragPath.length - 1] > hoverPath[hoverPath.length - 1] &&
+        hoverClientY > hoverMiddleY
+      ) {
         return;
       }
 
-      moveItem(dragIndex, hoverIndex);
-      draggedItem.index = hoverIndex;
+      // Ensure we're moving the correct item by checking for parent-child relationships
+      const isParent = dragPath.every((val, index) => val === hoverPath[index]);
+      const isChild = hoverPath.every((val, index) => val === dragPath[index]);
+
+      if (isParent || isChild) {
+        return;
+      }
+
+      // Perform the move
+      moveItem(dragPath, hoverPath);
+      draggedItem.path = hoverPath;
     },
   });
 
   drag(drop(ref));
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (collected?.isDragging) {
       setDragging(true);
+    } else {
+      setDragging(false);
     }
   }, [collected?.isDragging, setDragging]);
+
+  useEffect(() => {
+    if (ref.current && itemHeight === null) {
+      setItemHeight(ref.current.clientHeight);
+    }
+  }, [itemHeight]);
 
   return (
     <div ref={dragPreview}>
@@ -75,15 +103,31 @@ export const ListItem: React.FC<{
           cursor: collected?.isDragging ? "move" : "pointer",
           transition: "background-color 0.2s ease, transform 0.2s ease",
           border: collected?.isDragging ? "2px dotted #297fb5" : "unset",
+          marginLeft: path.length * 10 + "px", // indent based on depth
         }}
+        onClick={() => item.type === "module" && setIsOpen(!isOpen)}
       >
         {collected?.isDragging ? (
-          <span>&nbsp;</span>
+          <span
+            style={{
+              display: "block",
+              height: itemHeight ? `${itemHeight}px` : "auto",
+            }}
+          >
+            &nbsp;
+          </span>
         ) : (
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {item.type === "module" ? (
               <span style={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <MdChevronRight color="gray" size={18} />
+                <MdChevronRight
+                  color="gray"
+                  size={18}
+                  style={{
+                    transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s ease",
+                  }}
+                />
                 <MdFolder color="gray" size={18} />
               </span>
             ) : (
@@ -97,6 +141,18 @@ export const ListItem: React.FC<{
           </div>
         )}
       </div>
+
+      {isOpen &&
+        item.fileSystem &&
+        item.fileSystem.map((childItem, index) => (
+          <ListItem
+            key={childItem.id}
+            item={childItem}
+            path={[...path, index]}
+            moveItem={moveItem}
+            setDragging={setDragging}
+          />
+        ))}
     </div>
   );
 };
