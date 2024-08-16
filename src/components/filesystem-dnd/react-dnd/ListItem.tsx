@@ -3,7 +3,7 @@ import { useDrag, useDrop, type XYCoord } from "react-dnd";
 import { MdInsertDriveFile, MdFolder, MdChevronRight } from "react-icons/md";
 import { type DragItem, type Item } from "./interface";
 
-const ACCEPTED_TYPE = "ALL";
+const ACCEPTED_TYPES = "ALL";
 
 export const ListItem: React.FC<{
   item: Item;
@@ -18,8 +18,8 @@ export const ListItem: React.FC<{
   const [isHoveredInMiddle, setIsHoveredInMiddle] = useState(false);
 
   const [collected, drag, dragPreview] = useDrag({
-    type: ACCEPTED_TYPE,
-    item: { ...item, path, type: ACCEPTED_TYPE },
+    type: ACCEPTED_TYPES,
+    item: { ...item, path, type: ACCEPTED_TYPES },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -30,7 +30,7 @@ export const ListItem: React.FC<{
   });
 
   const [, drop] = useDrop({
-    accept: ACCEPTED_TYPE,
+    accept: ACCEPTED_TYPES,
     hover: (draggedItem: DragItem, monitor) => {
       if (!ref.current) {
         return;
