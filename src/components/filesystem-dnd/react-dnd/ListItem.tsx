@@ -57,24 +57,30 @@ export const ListItem: React.FC<{
       const clientOffset = monitor.getClientOffset();
       const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
 
-      // Only move when the mouse has crossed half of the item's height
-      if (
-        dragPath[dragPath.length - 1] < hoverPath[hoverPath.length - 1] &&
-        hoverClientY < hoverMiddleY
-      ) {
-        setBeingDragged(false);
-        return;
+      let newHoverPath = hoverPath;
+
+      // Check if this is the last item in an open folder
+      const isLastItem =
+        item.type === "module" &&
+        isOpen &&
+        hoverPath[hoverPath.length - 1] === item.fileSystem!.length - 1;
+
+      if (isLastItem && hoverClientY > hoverMiddleY) {
+        // Move the item outside the folder, just below it
+        const parentPath = hoverPath.slice(0, -1);
+        const parentIndex = parentPath[parentPath.length - 1] + 1;
+        newHoverPath = [...parentPath.slice(0, -1), parentIndex];
+      } else {
+        // Determine if we're moving up or down within the same level
+        const moveUp = hoverClientY < hoverMiddleY;
+        const targetIndex = moveUp
+          ? hoverPath[hoverPath.length - 1]
+          : hoverPath[hoverPath.length - 1] + 1;
+
+        newHoverPath = [...hoverPath.slice(0, -1), targetIndex];
       }
 
-      if (
-        dragPath[dragPath.length - 1] > hoverPath[hoverPath.length - 1] &&
-        hoverClientY > hoverMiddleY
-      ) {
-        setBeingDragged(false);
-        return;
-      }
-
-      // Ensure we're moving the correct item by checking for parent-child relationships
+      // Ensure we're not trying to move the item into itself or its own children
       const isParent = dragPath.every((val, index) => val === hoverPath[index]);
       const isChild = hoverPath.every((val, index) => val === dragPath[index]);
 
@@ -82,9 +88,11 @@ export const ListItem: React.FC<{
         return;
       }
 
-      // Perform the move
-      moveItem(dragPath, hoverPath);
-      draggedItem.path = hoverPath;
+      // Perform the move only if the target path is different
+      if (JSON.stringify(dragPath) !== JSON.stringify(newHoverPath)) {
+        moveItem(dragPath, newHoverPath);
+        draggedItem.path = newHoverPath;
+      }
     },
     drop: () => {
       setBeingDragged(false);
@@ -167,7 +175,11 @@ export const ListItem: React.FC<{
               : "unset",
           marginLeft: path.length * 10 + "px", // indent based on depth
         }}
-        onClick={() => item.type === "module" && setIsOpen(!isOpen)}
+        onClick={() => {
+          if (item.type === "module") {
+            setIsOpen(!isOpen);
+          }
+        }}
       >
         {collected?.isDragging ? <span>&nbsp;</span> : renderItemContent()}
       </div>
