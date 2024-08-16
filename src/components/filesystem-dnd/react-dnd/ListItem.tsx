@@ -12,12 +12,13 @@ export const ListItem: React.FC<{
   setDragging: (isDragging: boolean) => void;
 }> = ({ item, path, moveItem, setDragging }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(false); // state for folder open/close
-  const [itemHeight, setItemHeight] = useState<number | null>(null); // state for storing the height of the item
+  const [isOpen, setIsOpen] = useState(false);
+  const [itemHeight, setItemHeight] = useState<number | null>(null);
   const [beingDragged, setBeingDragged] = useState(false);
+  const [isHoveredInMiddle, setIsHoveredInMiddle] = useState(false);
 
   const [collected, drag, dragPreview] = useDrag({
-    type: typeof ACCEPTED_TYPE,
+    type: ACCEPTED_TYPE,
     item: { ...item, path, type: ACCEPTED_TYPE },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
@@ -59,18 +60,17 @@ export const ListItem: React.FC<{
 
       let newHoverPath = hoverPath;
 
-      // Check if this is the last item in an open folder
-      const isLastItem =
-        item.type === "module" &&
-        isOpen &&
-        hoverPath[hoverPath.length - 1] === item.fileSystem!.length - 1;
+      // Check if the hovered item is a folder
+      const isHoveringOverFolder =
+        item.type === "module" && (!isOpen || hoverClientY >= hoverMiddleY);
 
-      if (isLastItem && hoverClientY > hoverMiddleY) {
-        // Move the item outside the folder, just below it
-        const parentPath = hoverPath.slice(0, -1);
-        const parentIndex = parentPath[parentPath.length - 1] + 1;
-        newHoverPath = [...parentPath.slice(0, -1), parentIndex];
+      if (isHoveringOverFolder && hoverClientY >= hoverMiddleY) {
+        // Place the dragged item at the first index inside the folder
+        newHoverPath = [...hoverPath, 0];
+        setIsHoveredInMiddle(true);
       } else {
+        setIsHoveredInMiddle(false);
+
         // Determine if we're moving up or down within the same level
         const moveUp = hoverClientY < hoverMiddleY;
         const targetIndex = moveUp
@@ -96,6 +96,7 @@ export const ListItem: React.FC<{
     },
     drop: () => {
       setBeingDragged(false);
+      setIsHoveredInMiddle(false);
     },
   });
 
@@ -164,13 +165,13 @@ export const ListItem: React.FC<{
           marginBottom: "4px",
           padding: "4px",
           backgroundColor:
-            collected?.isDragging || beingDragged
+            collected?.isDragging || beingDragged || isHoveredInMiddle
               ? "rgba(133, 175, 230, .2)"
               : "#f2f2f2",
           cursor: collected?.isDragging || beingDragged ? "move" : "pointer",
           transition: "background-color 0.2s ease, transform 0.2s ease",
           border:
-            collected?.isDragging || beingDragged
+            collected?.isDragging || beingDragged || isHoveredInMiddle
               ? "2px dotted #297fb5"
               : "unset",
           marginLeft: path.length * 10 + "px", // indent based on depth
