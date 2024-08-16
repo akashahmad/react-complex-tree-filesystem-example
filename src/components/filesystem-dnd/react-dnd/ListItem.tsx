@@ -14,6 +14,7 @@ export const ListItem: React.FC<{
   const ref = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false); // state for folder open/close
   const [itemHeight, setItemHeight] = useState<number | null>(null); // state for storing the height of the item
+  const [beingDragged, setBeingDragged] = useState(false);
 
   const [collected, drag, dragPreview] = useDrag({
     type: typeof ACCEPTED_TYPE,
@@ -21,7 +22,10 @@ export const ListItem: React.FC<{
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-    end: () => setDragging(false),
+    end: () => {
+      setBeingDragged(false);
+      setDragging(false);
+    },
   });
 
   const [, drop] = useDrop({
@@ -36,7 +40,10 @@ export const ListItem: React.FC<{
 
       // Prevent replacing the item with itself
       if (JSON.stringify(dragPath) === JSON.stringify(hoverPath)) {
+        setBeingDragged(true);
         return;
+      } else {
+        setBeingDragged(false);
       }
 
       const hoverBoundingRect = ref.current.getBoundingClientRect();
@@ -80,6 +87,7 @@ export const ListItem: React.FC<{
     if (collected?.isDragging) {
       setDragging(true);
     } else {
+      setBeingDragged(false);
       setDragging(false);
     }
   }, [collected?.isDragging, setDragging]);
@@ -137,12 +145,16 @@ export const ListItem: React.FC<{
         style={{
           marginBottom: "4px",
           padding: "4px",
-          backgroundColor: collected?.isDragging
-            ? "rgba(133, 175, 230, .2)"
-            : "#f2f2f2",
-          cursor: collected?.isDragging ? "move" : "pointer",
+          backgroundColor:
+            collected?.isDragging || beingDragged
+              ? "rgba(133, 175, 230, .2)"
+              : "#f2f2f2",
+          cursor: collected?.isDragging || beingDragged ? "move" : "pointer",
           transition: "background-color 0.2s ease, transform 0.2s ease",
-          border: collected?.isDragging ? "2px dotted #297fb5" : "unset",
+          border:
+            collected?.isDragging || beingDragged
+              ? "2px dotted #297fb5"
+              : "unset",
           marginLeft: path.length * 10 + "px", // indent based on depth
         }}
         onClick={() => item.type === "module" && setIsOpen(!isOpen)}
