@@ -77,7 +77,12 @@ export const ListItem: React.FC<{
         draggedItem.path = newHoverPath;
         return;
       } else if (isHoveringOverFolder && hoverClientY >= hoverMiddleY) {
-        setIsHoveredInMiddle(true);
+        if (!isHoveredInMiddle) {
+          setIsHoveredInMiddle(true);
+          setTimeout(() => {
+            setIsHoveredInMiddle(false);
+          }, 2000);
+        }
         // Place the dragged item at the first index inside the folder
         newHoverPath = [...hoverPath, 0];
       } else {
