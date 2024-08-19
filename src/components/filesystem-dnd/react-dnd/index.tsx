@@ -7,11 +7,17 @@ import { fileSystem as initialFileSystem } from "./data";
 
 const FileSystem: React.FC = () => {
   const [fileSystem, setFileSystem] = useState<Item[]>(initialFileSystem);
-
+  const [tempFileSystem, setTempFileSystem] =
+    useState<Item[]>(initialFileSystem);
   const [isDragging, setIsDragging] = useState(false);
 
-  const moveItem = (fromPath: number[], toPath: number[]) => {
-    setFileSystem((prevFileSystem) => {
+  const moveItem = (
+    fromPath: number[],
+    toPath: number[],
+    updateTemp = true
+  ) => {
+    const updateSystem = updateTemp ? setTempFileSystem : setFileSystem;
+    updateSystem((prevFileSystem) => {
       const updatedFileSystem = JSON.parse(JSON.stringify(prevFileSystem));
 
       // Find the item being moved
@@ -59,16 +65,15 @@ const FileSystem: React.FC = () => {
     });
   };
 
-  const handleMoveItem = (fromPath: number[], toPath: number[]) => {
-    if (fromPath.length > toPath.length) {
-      // Moving from nested level to higher level
-      moveItem(fromPath, toPath);
-    } else if (fromPath.length < toPath.length) {
-      // Moving from higher level to nested level
-      moveItem(fromPath, toPath);
-    } else {
-      // Moving within the same level
-      moveItem(fromPath, toPath);
+  const handleMoveItem = (
+    fromPath: number[],
+    toPath: number[],
+    isFinalMove = false
+  ) => {
+    moveItem(fromPath, toPath, !isFinalMove);
+    if (isFinalMove) {
+      // Synchronize the fileSystem with tempFileSystem after drop
+      setFileSystem(() => JSON.parse(JSON.stringify(tempFileSystem)));
     }
   };
 
@@ -85,6 +90,7 @@ const FileSystem: React.FC = () => {
         (targetFolder as Item).isExpanded = !(targetFolder as Item).isExpanded;
       }
 
+      setTempFileSystem(updatedFileSystem); // Sync tempFileSystem with fileSystem
       return updatedFileSystem;
     });
   };
@@ -100,12 +106,12 @@ const FileSystem: React.FC = () => {
           transition: "background-color 0.2s ease",
         }}
       >
-        {fileSystem.map((item, index) => (
+        {tempFileSystem.map((item, index) => (
           <ListItem
             key={item.id}
             path={[index]}
             item={item}
-            fileSystem={fileSystem || []}
+            fileSystem={tempFileSystem || []}
             moveItem={handleMoveItem}
             setDragging={setIsDragging}
             toggleFolder={toggleFolder} // Pass the toggle function

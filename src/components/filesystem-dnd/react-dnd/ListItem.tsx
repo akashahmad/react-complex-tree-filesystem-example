@@ -9,9 +9,13 @@ export const ListItem: React.FC<{
   item: Item;
   path: number[];
   fileSystem: Item[];
-  moveItem: (fromPath: number[], toPath: number[]) => void;
+  moveItem: (
+    fromPath: number[],
+    toPath: number[],
+    isFinalMove?: boolean
+  ) => void;
   setDragging: (isDragging: boolean) => void;
-  toggleFolder: (path: number[]) => void; // Receive the toggle function
+  toggleFolder: (path: number[]) => void;
 }> = ({ item, path, moveItem, setDragging, fileSystem, toggleFolder }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [itemHeight, setItemHeight] = useState<number | null>(null);
@@ -104,9 +108,12 @@ export const ListItem: React.FC<{
         draggedItem.path = newHoverPath;
       }
     },
-    drop: () => {
+    drop: (draggedItem: DragItem & { path: number[] }) => {
       setBeingDragged(false);
       setIsHoveredInMiddle(false);
+
+      // Update the original fileSystem on drop
+      moveItem(draggedItem.path, path, true);
     },
   });
 
