@@ -66,6 +66,7 @@ export const ListItem: React.FC<{
         setIsHoveredInTop(true);
         setIsHoveredInTop(false);
         moveItem(dragPath, hoverPath);
+        draggedItem.path = hoverPath;
         return;
       } else if (isHoveringAtTheBottomOfFolder) {
         setIsHoveredInBottom(true);
@@ -76,6 +77,7 @@ export const ListItem: React.FC<{
           hoverPath[hoverPath.length - 2] + 1,
         ];
         moveItem(dragPath, newHoverPath);
+        draggedItem.path = newHoverPath;
         return;
       } else if (isHoveringOverFolder && hoverClientY >= hoverMiddleY) {
         setIsHoveredInMiddle(true);
