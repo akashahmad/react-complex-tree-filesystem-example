@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
-import HTML5Backend from "react-dnd-html5-backend";
+import { HTML5Backend } from "react-dnd-html5-backend";
 import type { Item } from "./interface";
 import { ListItem } from "./ListItem";
 import { fileSystem as initialFileSystem } from "./data";
@@ -81,8 +81,8 @@ const FileSystem: React.FC = () => {
         { fileSystem: updatedFileSystem }
       );
 
-      if (targetFolder && targetFolder.type === "module") {
-        targetFolder.isExpanded = !targetFolder.isExpanded;
+      if (targetFolder && (targetFolder as Item).type === "module") {
+        (targetFolder as Item).isExpanded = !(targetFolder as Item).isExpanded;
       }
 
       return updatedFileSystem;

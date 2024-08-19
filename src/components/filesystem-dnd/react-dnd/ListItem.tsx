@@ -17,8 +17,6 @@ export const ListItem: React.FC<{
   const [itemHeight, setItemHeight] = useState<number | null>(null);
   const [beingDragged, setBeingDragged] = useState(false);
   const [isHoveredInMiddle, setIsHoveredInMiddle] = useState(false);
-  const [isHoveredInTop, setIsHoveredInTop] = useState(false);
-  const [isHoveredInBottom, setIsHoveredInBottom] = useState(false);
 
   const [collected, drag, dragPreview] = useDrag({
     type: ACCEPTED_TYPES,
@@ -34,7 +32,7 @@ export const ListItem: React.FC<{
 
   const [, drop] = useDrop({
     accept: ACCEPTED_TYPES,
-    hover: (draggedItem: DragItem, monitor) => {
+    hover: (draggedItem: DragItem & { path: number[] }, monitor) => {
       if (!ref.current) {
         return;
       }
@@ -63,15 +61,10 @@ export const ListItem: React.FC<{
         hoverClientY > 0.6 * (itemHeight || 30);
 
       if (isHoveringAtTheTopOfFolder) {
-        setIsHoveredInTop(true);
-        setIsHoveredInTop(false);
         moveItem(dragPath, hoverPath);
         draggedItem.path = hoverPath;
         return;
       } else if (isHoveringAtTheBottomOfFolder) {
-        setIsHoveredInBottom(true);
-        setIsHoveredInMiddle(false);
-        setIsHoveredInTop(false);
         newHoverPath = [
           ...hoverPath.slice(0, -2),
           hoverPath[hoverPath.length - 2] + 1,
@@ -81,14 +74,10 @@ export const ListItem: React.FC<{
         return;
       } else if (isHoveringOverFolder && hoverClientY >= hoverMiddleY) {
         setIsHoveredInMiddle(true);
-        setIsHoveredInBottom(false);
-        setIsHoveredInTop(false);
         // Place the dragged item at the first index inside the folder
         newHoverPath = [...hoverPath, 0];
       } else {
         setIsHoveredInMiddle(false);
-        setIsHoveredInBottom(false);
-        setIsHoveredInTop(false);
       }
 
       if (JSON.stringify(dragPath) === JSON.stringify(hoverPath)) {
