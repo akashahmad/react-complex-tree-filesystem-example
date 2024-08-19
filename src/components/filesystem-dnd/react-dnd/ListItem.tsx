@@ -8,14 +8,17 @@ const ACCEPTED_TYPES = "ALL";
 export const ListItem: React.FC<{
   item: Item;
   path: number[];
+  fileSystem: Item[];
   moveItem: (fromPath: number[], toPath: number[]) => void;
   setDragging: (isDragging: boolean) => void;
-}> = ({ item, path, moveItem, setDragging }) => {
+  toggleFolder: (path: number[]) => void; // Receive the toggle function
+}> = ({ item, path, moveItem, setDragging, fileSystem, toggleFolder }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const [isOpen, setIsOpen] = useState(false);
   const [itemHeight, setItemHeight] = useState<number | null>(null);
   const [beingDragged, setBeingDragged] = useState(false);
   const [isHoveredInMiddle, setIsHoveredInMiddle] = useState(false);
+  const [isHoveredInTop, setIsHoveredInTop] = useState(false);
+  const [isHoveredInBottom, setIsHoveredInBottom] = useState(false);
 
   const [collected, drag, dragPreview] = useDrag({
     type: ACCEPTED_TYPES,
@@ -39,7 +42,53 @@ export const ListItem: React.FC<{
       const dragPath = draggedItem.path;
       const hoverPath = path;
 
-      // Prevent replacing the item with itself
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
+      const hoverMiddleY =
+        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
+      const clientOffset = monitor.getClientOffset();
+      const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
+      const isFolderExpanded = item.type === "module" && item.isExpanded;
+
+      let newHoverPath = hoverPath;
+
+      const isHoveringOverFolder =
+        item.type === "module" &&
+        (!isFolderExpanded || hoverClientY >= hoverMiddleY);
+      const isHoveringAtTheTopOfFolder =
+        item.type === "module" && hoverClientY > -1.5 && hoverClientY < 5;
+      const isHoveringAtTheBottomOfFolder =
+        fileSystem.findIndex((x) => x.id === item.id) !== -1 &&
+        fileSystem.findIndex((x) => x.id === item.id) ===
+          fileSystem.length - 1 &&
+        hoverClientY > 0.6 * (itemHeight || 30);
+
+      if (isHoveringAtTheTopOfFolder) {
+        setIsHoveredInTop(true);
+        setIsHoveredInTop(false);
+        moveItem(dragPath, hoverPath);
+        return;
+      } else if (isHoveringAtTheBottomOfFolder) {
+        setIsHoveredInBottom(true);
+        setIsHoveredInMiddle(false);
+        setIsHoveredInTop(false);
+        newHoverPath = [
+          ...hoverPath.slice(0, -2),
+          hoverPath[hoverPath.length - 2] + 1,
+        ];
+        moveItem(dragPath, newHoverPath);
+        return;
+      } else if (isHoveringOverFolder && hoverClientY >= hoverMiddleY) {
+        setIsHoveredInMiddle(true);
+        setIsHoveredInBottom(false);
+        setIsHoveredInTop(false);
+        // Place the dragged item at the first index inside the folder
+        newHoverPath = [...hoverPath, 0];
+      } else {
+        setIsHoveredInMiddle(false);
+        setIsHoveredInBottom(false);
+        setIsHoveredInTop(false);
+      }
+
       if (JSON.stringify(dragPath) === JSON.stringify(hoverPath)) {
         if (!beingDragged) {
           setBeingDragged(true);
@@ -52,35 +101,6 @@ export const ListItem: React.FC<{
         setBeingDragged(false);
       }
 
-      const hoverBoundingRect = ref.current.getBoundingClientRect();
-      const hoverMiddleY =
-        (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
-      const clientOffset = monitor.getClientOffset();
-      const hoverClientY = (clientOffset as XYCoord).y - hoverBoundingRect.top;
-
-      let newHoverPath = hoverPath;
-
-      // Check if the hovered item is a folder
-      const isHoveringOverFolder =
-        item.type === "module" && (!isOpen || hoverClientY >= hoverMiddleY);
-
-      if (isHoveringOverFolder && hoverClientY >= hoverMiddleY) {
-        // Place the dragged item at the first index inside the folder
-        newHoverPath = [...hoverPath, 0];
-        setIsHoveredInMiddle(true);
-      } else {
-        setIsHoveredInMiddle(false);
-
-        // Determine if we're moving up or down within the same level
-        const moveUp = hoverClientY < hoverMiddleY;
-        const targetIndex = moveUp
-          ? hoverPath[hoverPath.length - 1]
-          : hoverPath[hoverPath.length - 1] + 1;
-
-        newHoverPath = [...hoverPath.slice(0, -1), targetIndex];
-      }
-
-      // Ensure we're not trying to move the item into itself or its own children
       const isParent = dragPath.every((val, index) => val === hoverPath[index]);
       const isChild = hoverPath.every((val, index) => val === dragPath[index]);
 
@@ -88,7 +108,6 @@ export const ListItem: React.FC<{
         return;
       }
 
-      // Perform the move only if the target path is different
       if (JSON.stringify(dragPath) !== JSON.stringify(newHoverPath)) {
         moveItem(dragPath, newHoverPath);
         draggedItem.path = newHoverPath;
@@ -113,9 +132,12 @@ export const ListItem: React.FC<{
 
   useEffect(() => {
     if (ref.current && itemHeight === null) {
-      setItemHeight(ref.current.clientHeight);
+      setItemHeight(
+        ref.current.clientHeight *
+          (item?.fileSystem ? item.fileSystem.length || 1 : 1)
+      );
     }
-  }, [itemHeight]);
+  }, [item.fileSystem, itemHeight]);
 
   const renderPlaceholder = (depth: number) => (
     <span
@@ -124,8 +146,8 @@ export const ListItem: React.FC<{
         height: itemHeight ? `${itemHeight}px` : "auto",
         backgroundColor: "rgba(133, 175, 230, .2)",
         border: "2px dotted #297fb5",
-        marginLeft: `${depth * 10}px`, // indent based on depth
-        width: `calc(100% - ${depth * 10}px)`, // reduce width based on depth
+        marginLeft: `${depth * 10}px`,
+        width: `calc(100% - ${depth * 10}px)`,
       }}
     >
       &nbsp;
@@ -140,7 +162,7 @@ export const ListItem: React.FC<{
             color="gray"
             size={18}
             style={{
-              transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+              transform: item.isExpanded ? "rotate(90deg)" : "rotate(0deg)",
               transition: "transform 0.2s ease",
             }}
           />
@@ -174,29 +196,31 @@ export const ListItem: React.FC<{
             collected?.isDragging || beingDragged || isHoveredInMiddle
               ? "2px dotted #297fb5"
               : "unset",
-          marginLeft: path.length * 10 + "px", // indent based on depth
+          marginLeft: path.length * 10 + "px",
         }}
         onClick={() => {
           if (item.type === "module") {
-            setIsOpen(!isOpen);
+            toggleFolder(path);
           }
         }}
       >
         {collected?.isDragging ? <span>&nbsp;</span> : renderItemContent()}
       </div>
 
-      {isOpen &&
+      {item.isExpanded &&
         item.fileSystem &&
         item.fileSystem.map((childItem, index) => (
           <React.Fragment key={childItem.id}>
             {collected?.isDragging ? (
-              renderPlaceholder(path.length + 1) // Indent children more
+              renderPlaceholder(path.length + 1)
             ) : (
               <ListItem
                 item={childItem}
                 path={[...path, index]}
                 moveItem={moveItem}
+                fileSystem={item?.fileSystem || []}
                 setDragging={setDragging}
+                toggleFolder={toggleFolder} // Pass the toggle function
               />
             )}
           </React.Fragment>

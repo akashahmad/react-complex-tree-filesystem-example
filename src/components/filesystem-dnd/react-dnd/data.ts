@@ -8,6 +8,7 @@ export const fileSystem: Item[] = [
     id: uuidv4(),
     name: "Item 3",
     type: "module",
+    isExpanded: false, // New property
     fileSystem: [
       { id: uuidv4(), name: "Item 8", type: "file" },
       { id: uuidv4(), name: "Item 9", type: "file" },
@@ -18,6 +19,7 @@ export const fileSystem: Item[] = [
     id: uuidv4(),
     name: "Item 5",
     type: "module",
+    isExpanded: false, // New property
     fileSystem: [
       { id: uuidv4(), name: "Item 10", type: "file" },
       { id: uuidv4(), name: "Item 11", type: "file" },
@@ -26,6 +28,7 @@ export const fileSystem: Item[] = [
         id: uuidv4(),
         name: "Item 13",
         type: "module",
+        isExpanded: false, // New property
         fileSystem: [
           { id: uuidv4(), name: "Item 16", type: "file" },
           { id: uuidv4(), name: "Item 17", type: "file" },

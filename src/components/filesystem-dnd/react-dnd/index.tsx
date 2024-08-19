@@ -22,7 +22,7 @@ const FileSystem: React.FC = () => {
 
       if (!itemToMove) {
         console.error("Item to move is undefined.");
-        return prevFileSystem;
+        return fileSystem;
       }
 
       // Remove the item from the original location
@@ -72,6 +72,23 @@ const FileSystem: React.FC = () => {
     }
   };
 
+  const toggleFolder = (path: number[]) => {
+    setFileSystem((prevFileSystem) => {
+      const updatedFileSystem = JSON.parse(JSON.stringify(prevFileSystem));
+
+      const targetFolder = path.reduce(
+        (currentItem, pathIndex) => currentItem?.fileSystem?.[pathIndex],
+        { fileSystem: updatedFileSystem }
+      );
+
+      if (targetFolder && targetFolder.type === "module") {
+        targetFolder.isExpanded = !targetFolder.isExpanded;
+      }
+
+      return updatedFileSystem;
+    });
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div
@@ -88,8 +105,10 @@ const FileSystem: React.FC = () => {
             key={item.id}
             path={[index]}
             item={item}
-            moveItem={handleMoveItem} // Use handleMoveItem here
+            fileSystem={fileSystem || []}
+            moveItem={handleMoveItem}
             setDragging={setIsDragging}
+            toggleFolder={toggleFolder} // Pass the toggle function
           />
         ))}
       </div>
