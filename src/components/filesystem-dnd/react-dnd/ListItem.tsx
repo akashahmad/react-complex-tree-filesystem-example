@@ -9,7 +9,6 @@ export const ListItem: React.FC<{
   item: Item;
   path: number[];
   fileSystem: Item[];
-  shouldMoveItem: boolean;
   moveItem: (
     fromPath: number[],
     toPath: number[],
@@ -17,15 +16,7 @@ export const ListItem: React.FC<{
   ) => void;
   toggleFolder: (path: number[]) => void;
   setDragging: (dragging: boolean) => void; // Added setDragging prop
-}> = ({
-  item,
-  path,
-  moveItem,
-  fileSystem,
-  toggleFolder,
-  setDragging,
-  shouldMoveItem,
-}) => {
+}> = ({ item, path, moveItem, fileSystem, toggleFolder, setDragging }) => {
   const ref = useRef<HTMLDivElement>(null);
   const [itemHeight, setItemHeight] = useState<number | null>(null);
   const [beingDragged, setBeingDragged] = useState(false);
@@ -38,10 +29,14 @@ export const ListItem: React.FC<{
       isDragging: monitor.isDragging(),
     }),
     isDragging: (monitor) => {
-      setDragging(true);
-
       const itemBeingDragged = monitor.getItem();
-      return itemBeingDragged?.id === item.id;
+
+      if (itemBeingDragged?.id === item.id) {
+        setDragging(true);
+
+        return true;
+      }
+      return false;
     },
     end: () => {
       setDragging(false); // Set dragging to false when drag ends
@@ -52,7 +47,7 @@ export const ListItem: React.FC<{
   const [, drop] = useDrop({
     accept: ACCEPTED_TYPES,
     hover: (draggedItem: DragItem & { path: number[] }, monitor) => {
-      if (!ref.current || !shouldMoveItem) {
+      if (!ref.current) {
         return;
       }
 
@@ -129,8 +124,6 @@ export const ListItem: React.FC<{
       }
     },
     drop: (draggedItem: DragItem & { path: number[] }) => {
-      if (!shouldMoveItem) return;
-
       setBeingDragged(false);
       setIsHoveredInMiddle(false);
 
@@ -229,7 +222,6 @@ export const ListItem: React.FC<{
                 item={childItem}
                 path={[...path, index]}
                 moveItem={moveItem}
-                shouldMoveItem={shouldMoveItem}
                 fileSystem={item?.fileSystem || []}
                 toggleFolder={toggleFolder}
                 setDragging={setDragging} // Pass the setDragging function

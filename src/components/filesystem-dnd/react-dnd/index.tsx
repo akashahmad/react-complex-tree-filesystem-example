@@ -18,8 +18,6 @@ const FileSystem: React.FC = () => {
     toPath: number[],
     updateTemp = true
   ) => {
-    if (!isInsideDroppable) return;
-
     const updateSystem = updateTemp ? setTempFileSystem : setFileSystem;
     updateSystem((prevFileSystem) => {
       const updatedFileSystem = JSON.parse(JSON.stringify(prevFileSystem));
@@ -74,8 +72,6 @@ const FileSystem: React.FC = () => {
     toPath: number[],
     isFinalMove = false
   ) => {
-    if (!isInsideDroppable) return;
-
     moveItem(fromPath, toPath, !isFinalMove);
     if (isFinalMove) {
       // Synchronize the fileSystem with tempFileSystem after drop
@@ -120,6 +116,9 @@ const FileSystem: React.FC = () => {
   };
 
   const handleDraggingState = (dragging: boolean) => {
+    if (!dragging) {
+      setIsInsideDroppable(true);
+    }
     setIsDragging(dragging);
   };
 
@@ -183,7 +182,6 @@ const FileSystem: React.FC = () => {
             item={item}
             fileSystem={tempFileSystem || []}
             moveItem={handleMoveItem}
-            shouldMoveItem={isInsideDroppable && isDragging}
             setDragging={handleDraggingState} // Manage dragging state
             toggleFolder={toggleFolder} // Pass the toggle function
           />
