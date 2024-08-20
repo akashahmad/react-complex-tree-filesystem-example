@@ -9,35 +9,50 @@ export const ListItem: React.FC<{
   item: Item;
   path: number[];
   fileSystem: Item[];
+  shouldMoveItem: boolean;
   moveItem: (
     fromPath: number[],
     toPath: number[],
     isFinalMove?: boolean
   ) => void;
-  setDragging: (isDragging: boolean) => void;
   toggleFolder: (path: number[]) => void;
-}> = ({ item, path, moveItem, setDragging, fileSystem, toggleFolder }) => {
+  setDragging: (dragging: boolean) => void; // Added setDragging prop
+}> = ({
+  item,
+  path,
+  moveItem,
+  fileSystem,
+  toggleFolder,
+  setDragging,
+  shouldMoveItem,
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   const [itemHeight, setItemHeight] = useState<number | null>(null);
   const [beingDragged, setBeingDragged] = useState(false);
   const [isHoveredInMiddle, setIsHoveredInMiddle] = useState(false);
 
-  const [collected, drag, dragPreview] = useDrag({
+  const [{ isDragging }, drag, dragPreview] = useDrag({
     type: ACCEPTED_TYPES,
     item: { ...item, path, type: ACCEPTED_TYPES },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
+    isDragging: (monitor) => {
+      setDragging(true);
+
+      const itemBeingDragged = monitor.getItem();
+      return itemBeingDragged?.id === item.id;
+    },
     end: () => {
+      setDragging(false); // Set dragging to false when drag ends
       setBeingDragged(false);
-      setDragging(false);
     },
   });
 
   const [, drop] = useDrop({
     accept: ACCEPTED_TYPES,
     hover: (draggedItem: DragItem & { path: number[] }, monitor) => {
-      if (!ref.current) {
+      if (!ref.current || !shouldMoveItem) {
         return;
       }
 
@@ -114,6 +129,8 @@ export const ListItem: React.FC<{
       }
     },
     drop: (draggedItem: DragItem & { path: number[] }) => {
+      if (!shouldMoveItem) return;
+
       setBeingDragged(false);
       setIsHoveredInMiddle(false);
 
@@ -125,13 +142,11 @@ export const ListItem: React.FC<{
   drag(drop(ref));
 
   useEffect(() => {
-    if (collected?.isDragging) {
-      setDragging(true);
-    } else {
+    setDragging(isDragging); // Set dragging state in parent
+    if (!isDragging) {
       setBeingDragged(false);
-      setDragging(false);
     }
-  }, [collected?.isDragging, setDragging]);
+  }, [isDragging, setDragging]);
 
   useEffect(() => {
     if (ref.current && itemHeight === null) {
@@ -190,13 +205,13 @@ export const ListItem: React.FC<{
           marginBottom: "4px",
           padding: "4px",
           backgroundColor:
-            collected?.isDragging || beingDragged || isHoveredInMiddle
+            isDragging || beingDragged || isHoveredInMiddle
               ? "rgba(133, 175, 230, .2)"
               : "#f2f2f2",
-          cursor: collected?.isDragging || beingDragged ? "move" : "pointer",
+          cursor: isDragging || beingDragged ? "move" : "pointer",
           transition: "background-color 0.2s ease, transform 0.2s ease",
           border:
-            collected?.isDragging || beingDragged || isHoveredInMiddle
+            isDragging || beingDragged || isHoveredInMiddle
               ? "2px dotted #297fb5"
               : "unset",
           marginLeft: path.length * 10 + "px",
@@ -207,14 +222,14 @@ export const ListItem: React.FC<{
           }
         }}
       >
-        {collected?.isDragging ? <span>&nbsp;</span> : renderItemContent()}
+        {isDragging ? <span>&nbsp;</span> : renderItemContent()}
       </div>
 
       {item.isExpanded &&
         item.fileSystem &&
         item.fileSystem.map((childItem, index) => (
           <React.Fragment key={childItem.id}>
-            {collected?.isDragging ? (
+            {isDragging ? (
               renderPlaceholder(path.length + 1)
             ) : (
               <ListItem
@@ -222,8 +237,8 @@ export const ListItem: React.FC<{
                 path={[...path, index]}
                 moveItem={moveItem}
                 fileSystem={item?.fileSystem || []}
-                setDragging={setDragging}
-                toggleFolder={toggleFolder} // Pass the toggle function
+                toggleFolder={toggleFolder}
+                setDragging={setDragging} // Pass the setDragging function
               />
             )}
           </React.Fragment>
