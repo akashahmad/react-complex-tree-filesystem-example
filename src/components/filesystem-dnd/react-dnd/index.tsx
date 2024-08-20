@@ -137,7 +137,7 @@ const FileSystem: React.FC = () => {
           border: isDragging && !isInsideDroppable ? "2px dashed red" : "unset",
           position: "relative",
         }}
-        onDragEnter={handleDragEnter}
+        // onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
@@ -149,13 +149,13 @@ const FileSystem: React.FC = () => {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "rgba(255, 0, 0, 0.2)",
+              backgroundColor: "rgba(255, 0, 0, 0.1)",
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
               alignItems: "center",
               zIndex: 10,
-              gap: 10,
+              gap: 2,
             }}
           >
             <MdNotInterested color="red" style={{ marginTop: -20 }} size={90} />
@@ -170,7 +170,8 @@ const FileSystem: React.FC = () => {
                 textShadow: "4px 4px 8px rgba(56, 0, 0, 0.393)",
               }}
             >
-              Dragging outside of droppable area
+              You have Moved the Item outside of the droppable area, Please
+              release the item and drag it again!
             </span>
           </div>
         )}
