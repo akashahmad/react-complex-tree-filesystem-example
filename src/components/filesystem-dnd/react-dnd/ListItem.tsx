@@ -142,13 +142,6 @@ export const ListItem: React.FC<{
   drag(drop(ref));
 
   useEffect(() => {
-    setDragging(isDragging); // Set dragging state in parent
-    if (!isDragging) {
-      setBeingDragged(false);
-    }
-  }, [isDragging, setDragging]);
-
-  useEffect(() => {
     if (ref.current && itemHeight === null) {
       setItemHeight(
         ref.current.clientHeight *
@@ -236,6 +229,7 @@ export const ListItem: React.FC<{
                 item={childItem}
                 path={[...path, index]}
                 moveItem={moveItem}
+                shouldMoveItem={shouldMoveItem}
                 fileSystem={item?.fileSystem || []}
                 toggleFolder={toggleFolder}
                 setDragging={setDragging} // Pass the setDragging function

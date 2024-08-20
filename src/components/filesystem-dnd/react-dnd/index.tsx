@@ -10,7 +10,7 @@ const FileSystem: React.FC = () => {
   const [fileSystem, setFileSystem] = useState<Item[]>(initialFileSystem);
   const [tempFileSystem, setTempFileSystem] =
     useState<Item[]>(initialFileSystem);
-  const [isInsideDroppable, setIsInsideDroppable] = useState(false);
+  const [isInsideDroppable, setIsInsideDroppable] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
 
   const moveItem = (
