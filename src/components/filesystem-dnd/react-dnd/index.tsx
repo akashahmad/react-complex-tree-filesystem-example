@@ -130,7 +130,7 @@ const FileSystem: React.FC = () => {
           width: "200px",
           margin: "auto",
           background:
-            isInsideDroppable || isDragging
+            isInsideDroppable && isDragging
               ? "rgba(133, 175, 230, .2)"
               : "#f2f2f2",
           padding: "8px",
